@@ -16,6 +16,7 @@ sched = BackgroundScheduler()
 
 class Worker(QObject):
     sig_pop = pyqtSignal(TASK)
+    finished = pyqtSignal()
 
     def __init__(self, task):
         super().__init__()
@@ -23,6 +24,8 @@ class Worker(QObject):
 
     def work(self):
         self.sig_pop.emit(self.task)
+        self.finished.emit()
+
 
 
 class MyApp(QWidget):
@@ -55,6 +58,7 @@ class MyApp(QWidget):
         # self.show()
 
         sched.start()
+        self.show()
         # sched.print_jobs()
 
     # Construct UI for task
@@ -85,6 +89,7 @@ class MyApp(QWidget):
         task.reminder.snooze_btn_signal.connect(lambda: self.snooze(task))
         task.worker = Worker(task)
         task.thread = QThread()
+        task.worker.finished.connect(task.thread.quit)
         task.worker.moveToThread(task.thread)
         task.worker.sig_pop.connect(self.remind)
         self.add_job(task)
@@ -110,8 +115,9 @@ class MyApp(QWidget):
         dbOp.doneTask()
 
     def addTask(self, task):
+        self.tasks.append(task)
         self.addTaskUI(task)
-        self.taskDialog.destroy()
+        # self.taskDialog.destroy()
 
     def removeTaskUI(self, task):
         for i in reversed(range(task.hbox.count())):
@@ -151,8 +157,10 @@ class MyApp(QWidget):
 
     def closeEvent(self, e):
         sched.shutdown()
-        for task in self.tasks:
-            task.thread.quit()
+        # for task in self.tasks:
+        #     print('Quit Thread:', task.taskid)
+        #     task.thread.quit()
+        #     task.thread.wait()
 
     def startThread(self, task):
         task.thread.started.connect(task.worker.work)
@@ -162,5 +170,4 @@ class MyApp(QWidget):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     obj = MyApp()
-    obj.show()
     sys.exit(app.exec_())

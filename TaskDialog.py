@@ -79,6 +79,9 @@ class TaskDialog(QWidget):
     def cancel(self):
         self.close()
 
+    def closeEvent(self, e):
+        pass
+
 
 # if __name__ == '__main__':
 #     app = QApplication(sys.argv)
