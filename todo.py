@@ -9,7 +9,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from db import DbOperation
 from TaskDialog import TaskDialog
 from task import TASK
-from reminder import Reminder
+from RemindDialog import Reminder
 
 sched = BackgroundScheduler()
 
@@ -117,7 +117,7 @@ class MyApp(QWidget):
     def addTask(self, task):
         self.tasks.append(task)
         self.addTaskUI(task)
-        # self.taskDialog.destroy()
+        # self.taskDialog.destroy() # cause the bug: if add new task, main process won't end after close the main window
 
     def removeTaskUI(self, task):
         for i in reversed(range(task.hbox.count())):
