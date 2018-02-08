@@ -44,7 +44,6 @@ class TaskDialog(QWidget):
         hbox3.addWidget(cancelButton)
 
         vbox = QVBoxLayout()
-        # vbox.addStretch(1)
         vbox.addLayout(hbox1)
         vbox.addLayout(hbox2)
         vbox.addLayout(hbox3)
@@ -64,7 +63,6 @@ class TaskDialog(QWidget):
         _task_date = time.mktime(
             (_date.year, _date.month, _date.day, _time.hour, _time.minute, _time.second, 0, 0, 0))
         if self.task is None:
-            print("add new task")
             DbOperation.addTask(_task_content, _task_date)
             _task = DbOperation.queryNewTask()
             self.task = TASK(_task[0], _task[1], _task[2])

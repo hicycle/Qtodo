@@ -27,7 +27,7 @@ class DbOperation:
 
     @staticmethod
     def queryTask(done=0):
-        return transaction("SELECT * FROM TASKS WHERE DONE=%d" % done)
+        return transaction("SELECT * FROM TASKS WHERE DONE=%d ORDER BY DATE" % done)
 
     @staticmethod
     def queryNewTask():

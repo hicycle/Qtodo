@@ -1,8 +1,6 @@
 # Qtodo
 A windows todo application based on PyQt5
 
-[TOC]
-
 ## todo
 ### Function
 - [ ] Add button `Plan` `Done` to show planned\done tasks

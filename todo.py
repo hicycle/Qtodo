@@ -10,6 +10,7 @@ from db import DbOperation
 from TaskDialog import TaskDialog
 from task import TASK
 from RemindDialog import Reminder
+from utils import isToday
 
 sched = BackgroundScheduler()
 
@@ -27,7 +28,6 @@ class Worker(QObject):
         self.finished.emit()
 
 
-
 class MyApp(QWidget):
     def __init__(self):
         super().__init__()
@@ -40,20 +40,36 @@ class MyApp(QWidget):
 
         self.initUI()
 
+    def right(self):
+        screenGeo = QDesktopWidget().availableGeometry()
+        self.move(screenGeo.width() - self.width() - 20, 100)
+
     def initUI(self):
         self.vbox = QVBoxLayout()
 
         hbox1 = QHBoxLayout()
+        btn_plan = QPushButton("PLAN")
+        hbox1.addWidget(btn_plan)
+        btn_plan.clicked.connect(self.show_plan)
+        btn_plan.setDisabled(True)
+
+        btn_done = QPushButton("DONE")
+        hbox1.addWidget(btn_done)
+        btn_done.clicked.connect(self.show_done)
+        hbox1.addStretch(1)
+
         btn_add = QPushButton("ADD")
         hbox1.addWidget(btn_add)
-        hbox1.addStretch(1)
         btn_add.clicked.connect(self.addTaskDialog)
 
         self.vbox.addLayout(hbox1)
         for task in self.tasks:
             self.addTaskUI(task)
+        self.vbox.addStretch(1)
         self.setLayout(self.vbox)
-        self.setGeometry(1000, 300, 300, 150)
+        self.setFixedSize(400, 300)
+        self.right()
+        # self.setGeometry(1000, 300, 300, 150)
         self.setWindowTitle('Todo')
         # self.show()
 
@@ -65,8 +81,12 @@ class MyApp(QWidget):
     def constructTaskUI(self, hbox, task):
         task.checkbox_done = QCheckBox()
         task.label_task_content = QLabel(task.task_content)
-        task.label_datetime = QLabel(time.strftime(
-            "%Y-%m-%d %H:%M:%S", time.localtime(task.task_date)))
+        task.label_task_content.setFixedWidth(200)
+        if isToday(task.task_date):
+            task.label_datetime = QLabel(time.strftime("%H:%M:%S", time.localtime(task.task_date)))
+        else:
+            task.label_datetime = QLabel(time.strftime("%Y-%m-%d", time.localtime(task.task_date)))
+        task.label_datetime.setFixedWidth(60)
         btn_edit = QPushButton('EDIT')
         btn_edit.setFixedWidth(40)
         btn_del = QPushButton('DEL')
@@ -81,7 +101,8 @@ class MyApp(QWidget):
     def addTaskUI(self, task):
         task.hbox = QHBoxLayout()
         self.constructTaskUI(task.hbox, task)
-        self.vbox.addLayout(task.hbox)
+        self.vbox.insertLayout(1, task.hbox)
+        # self.vbox.addLayout(task.hbox)
         task.edit_window = TaskDialog(task)
         task.edit_window.ok_btn_signal.connect(self.editTaskUI)
         task.reminder = Reminder(task.task_content)
@@ -111,6 +132,7 @@ class MyApp(QWidget):
 
     def doneTask(self, task):
         self.removeTaskUI(task)
+        self.tasks.remove(task)
         dbOp = DbOperation(task)
         dbOp.doneTask()
 
@@ -157,14 +179,16 @@ class MyApp(QWidget):
 
     def closeEvent(self, e):
         sched.shutdown()
-        # for task in self.tasks:
-        #     print('Quit Thread:', task.taskid)
-        #     task.thread.quit()
-        #     task.thread.wait()
 
     def startThread(self, task):
         task.thread.started.connect(task.worker.work)
         task.thread.start()
+
+    def show_done(self):
+        pass
+
+    def show_plan(self):
+        pass
 
 
 if __name__ == '__main__':
