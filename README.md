@@ -3,7 +3,7 @@ A windows todo application based on PyQt5
 
 ## todo
 ### Function
-- [ ] Add button `Plan` `Done` to show planned\done tasks
+- [x] Add button `Plan` `Done` to show planned\done tasks
 - [ ] Add sub-task for each tasks    
 
 ### Beautify

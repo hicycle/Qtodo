@@ -33,10 +33,13 @@ class MyApp(QWidget):
         super().__init__()
 
         self.tasks = []
+        self.done_tasks = []
 
         _tasks = DbOperation.queryTask()
         for _task in _tasks:
             self.tasks.append(TASK(_task[0], _task[1], _task[2]))
+        for _task in DbOperation.queryTask(1):
+            self.done_tasks.append(TASK(_task[0], _task[1], _task[2]))
 
         self.initUI()
 
@@ -48,28 +51,34 @@ class MyApp(QWidget):
         self.vbox = QVBoxLayout()
 
         hbox1 = QHBoxLayout()
-        btn_plan = QPushButton("PLAN")
-        hbox1.addWidget(btn_plan)
-        btn_plan.clicked.connect(self.show_plan)
-        btn_plan.setDisabled(True)
-
-        btn_done = QPushButton("DONE")
-        hbox1.addWidget(btn_done)
-        btn_done.clicked.connect(self.show_done)
         hbox1.addStretch(1)
-
         btn_add = QPushButton("ADD")
         hbox1.addWidget(btn_add)
         btn_add.clicked.connect(self.addTaskDialog)
 
-        self.vbox.addLayout(hbox1)
+
+        self.tabWidget = QTabWidget()
+        self.taskVbox = QVBoxLayout()
+        self.doneTaskVbox = QVBoxLayout()
+
         for task in self.tasks:
             self.addTaskUI(task)
+        taskWidget = QWidget()
+        taskWidget.setLayout(self.taskVbox)
+        self.tabWidget.addTab(taskWidget, 'PLAN')
+
+        for task in self.done_tasks:
+            self.addDoneTaskUI(task)
+        doneTaskWidget = QWidget()
+        doneTaskWidget.setLayout(self.doneTaskVbox)
+        self.tabWidget.addTab(doneTaskWidget, 'DONE')
+
+        self.vbox.addWidget(self.tabWidget)
         self.vbox.addStretch(1)
+        self.vbox.addLayout(hbox1)
         self.setLayout(self.vbox)
         self.setFixedSize(400, 300)
         self.right()
-        # self.setGeometry(1000, 300, 300, 150)
         self.setWindowTitle('Todo')
         # self.show()
 
@@ -78,10 +87,11 @@ class MyApp(QWidget):
         # sched.print_jobs()
 
     # Construct UI for task
-    def constructTaskUI(self, hbox, task):
+    def constructTaskUI(self, hbox, task, done=False):
         task.checkbox_done = QCheckBox()
+
         task.label_task_content = QLabel(task.task_content)
-        task.label_task_content.setFixedWidth(200)
+        task.label_task_content.setFixedWidth(180)
         if isToday(task.task_date):
             task.label_datetime = QLabel(time.strftime("%H:%M:%S", time.localtime(task.task_date)))
         else:
@@ -95,13 +105,19 @@ class MyApp(QWidget):
             hbox.addWidget(widget)
         btn_edit.clicked.connect(lambda: self.editTask(task))
         btn_del.clicked.connect(lambda: self.delTask(task))
-        task.checkbox_done.stateChanged.connect(lambda: self.doneTask(task))
+        if done:
+            task.checkbox_done.setChecked(True)
+            task.checkbox_done.setDisabled(True)
+            hbox.removeWidget(btn_edit)
+        else:
+            task.checkbox_done.stateChanged.connect(lambda: self.doneTask(task))
 
     # Add Task UI to main window, initial the reminder dialog and schedule job for task
     def addTaskUI(self, task):
         task.hbox = QHBoxLayout()
         self.constructTaskUI(task.hbox, task)
-        self.vbox.insertLayout(1, task.hbox)
+        self.taskVbox.insertLayout(0, task.hbox)
+        self.taskVbox.addStretch(-1)
         # self.vbox.addLayout(task.hbox)
         task.edit_window = TaskDialog(task)
         task.edit_window.ok_btn_signal.connect(self.editTaskUI)
@@ -114,6 +130,14 @@ class MyApp(QWidget):
         task.worker.moveToThread(task.thread)
         task.worker.sig_pop.connect(self.remind)
         self.add_job(task)
+
+    def addDoneTaskUI(self, task):
+        task.hbox = QHBoxLayout()
+        self.constructTaskUI(task.hbox, task, True)
+        self.doneTaskVbox.insertLayout(0, task.hbox)
+        self.doneTaskVbox.addStretch(-1)
+        task.edit_window = TaskDialog(task)
+        task.edit_window.ok_btn_signal.connect(self.editTaskUI)
 
     # Pop up dialog to add Task
     def addTaskDialog(self):
@@ -135,6 +159,8 @@ class MyApp(QWidget):
         self.tasks.remove(task)
         dbOp = DbOperation(task)
         dbOp.doneTask()
+        self.addDoneTaskUI(task)
+
 
     def addTask(self, task):
         self.tasks.append(task)

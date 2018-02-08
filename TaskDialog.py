@@ -15,6 +15,10 @@ class TaskDialog(QWidget):
 
         self.initUI()
 
+    def right(self):
+        screenGeo = QDesktopWidget().availableGeometry()
+        self.move(screenGeo.width() - self.width() - 20, 100)
+
     def initUI(self):
         self.input_task_content = QLineEdit()
         self.input_date = QDateEdit(QDate.currentDate())
@@ -49,8 +53,9 @@ class TaskDialog(QWidget):
         vbox.addLayout(hbox3)
 
         self.setLayout(vbox)
-
-        self.setGeometry(300, 300, 300, 150)
+        self.setFixedSize(300, 150)
+        self.right()
+        # self.setGeometry(300, 300, 300, 150)
         self.setWindowTitle('Task')
 
         okButton.clicked.connect(self.ok)
